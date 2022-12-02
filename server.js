@@ -1,4 +1,5 @@
 const expres = require("express");
+const { initDB, getDBConnection } = require("./db-client");
 
 const app = expres();
 const port = 3100;
@@ -40,6 +41,11 @@ app.post('/user', (req, res) => {
 	res.send('user')
 })
 
+initDB("mongodb://localhost:27017")
+	.then((client) => {
 app.listen(port, () => {
 	console.log(`listening on ${port}`);
 })
+	}).catch(e => {
+		console.log(e);
+	})

@@ -1,19 +1,28 @@
 const { MongoClient } = require("mongodb");
 // Replace the uri string with your connection string.
-const uri =
-	"mongodb://localhost:27017/?retryWrites=true&w=majority";
-const client = new MongoClient(uri);
-async function run() {
-	try {
-		const database = client.db('sample_mflix');
-		const movies = database.collection('movies');
-		// Query for a movie that has the title 'Back to the Future'
-		const query = { title: 'Back to the Future' };
-		const movie = await movies.findOne(query);
-		console.log(movie);
-	} finally {
-		// Ensures that the client will close when you finish/error
-		await client.close();
+let client;
+
+async function initDB(url) {
+
+	if (client) {
+		return client;
 	}
+	client = await (new MongoClient(url)).connect()
+
+	// return client;
+	// const client = new MongoClient(uri);
 }
-run().catch(console.dir);
+
+function getDBConnection() {
+
+	if (!client) {
+		throw new Error("not connected to database")
+	}
+
+	return client
+}
+
+module.exports = {
+	initDB,
+	getDBConnection
+}
