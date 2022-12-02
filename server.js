@@ -1,4 +1,6 @@
+const { BSONTypeError } = require("bson");
 const expres = require("express");
+const { ObjectId } = require("mongodb");
 const { initDB, getDBConnection } = require("./db-client");
 
 const app = expres();
@@ -13,28 +15,30 @@ app.get('/', (req, res) => {
 
 app.get('/user/:userId', userCallback)
 
-function userCallback(req, res) {
+async function userCallback(req, res) {
 
-	let id = req.params.userId;
+	try {
 
-	let user1 = {
-		name: 'reza',
-		id: 1
+		let id = req.params.userId;
+		let dbClient = getDBConnection();
+		let db = dbClient.db('book-store');
+		let users = db.collection('users');
+
+		let myUser = await users.findOne({ _id: ObjectId(id) });
+
+		if (myUser) {
+			return res.json(myUser)
+		} else {
+			return res.send(`no user found with id ${id}`)
+		}
+
+	} catch (e) {
+		if (e instanceof BSONTypeError) {
+			console.log('db error is: ' + e);
+		}
+
+		res.send('oops error happened!')
 	}
-
-	let user2 = {
-		name: 'shayan',
-		id: 2
-	}
-
-	if (id === user1.id.toString()) {
-		res.json(user1);
-	} else if (id === user2.id.toString()) {
-		res.json(user2);
-	} else {
-		res.send(`no user found with id ${id}`)
-	}
-
 }
 
 app.post('/user', (req, res) => {
@@ -43,9 +47,9 @@ app.post('/user', (req, res) => {
 
 initDB("mongodb://localhost:27017")
 	.then((client) => {
-app.listen(port, () => {
-	console.log(`listening on ${port}`);
-})
+		app.listen(port, () => {
+			console.log(`listening on ${port}`);
+		})
 	}).catch(e => {
 		console.log(e);
 	})
